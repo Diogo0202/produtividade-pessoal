@@ -99,6 +99,18 @@ export function filterWeatherEvents(events: WeatherEvent[], selectedKinds: Weath
   });
 }
 
+export function distanceInKm(from: Coordinates, to: Pick<WeatherEvent, "latitude" | "longitude">) {
+  const earthRadiusKm = 6371;
+  const latitudeDelta = ((to.latitude - from.latitude) * Math.PI) / 180;
+  const longitudeDelta = ((to.longitude - from.longitude) * Math.PI) / 180;
+  const a = Math.sin(latitudeDelta / 2) ** 2 + Math.cos((from.latitude * Math.PI) / 180) * Math.cos((to.latitude * Math.PI) / 180) * Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function getNearbyHighRiskEvents(events: WeatherEvent[], coordinates: Coordinates, radiusKm = 5) {
+  return events.filter((event) => event.level === "alto" && distanceInKm(coordinates, event) <= radiusKm);
+}
+
 export function parseWeatherResponse(data: any): WeatherSnapshot {
   const current = data.current;
   const hourly = data.hourly;

@@ -6,11 +6,12 @@ import { WeatherMap } from "@/components/weather/weather-map";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ScreenContainer } from "@/components/screen-container";
 import { useWeather } from "@/lib/weather-store";
-import { getConditionIcon, getConditionLabel } from "@/lib/weather-utils";
+import { formatDateTime, getConditionIcon, getConditionLabel } from "@/lib/weather-utils";
 
 export default function MapScreen() {
-  const { coordinates, snapshot, events, loading, error, locationState, requestLocation, refresh, selectEvent } = useWeather();
+  const { coordinates, snapshot, events, nearbyHighRiskEvents, loading, error, locationState, requestLocation, refresh, selectEvent } = useWeather();
   const current = snapshot?.current;
+  const highRiskAlert = nearbyHighRiskEvents[0];
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
@@ -26,6 +27,7 @@ export default function MapScreen() {
         </View>
         <View style={styles.statusChip}><View style={styles.statusDot} /><Text style={styles.statusText}>{events.length ? `${events.length} sinais no entorno` : "Sem risco relevante previsto"}</Text></View>
         <Pressable onPress={() => setFiltersOpen(true)} style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}><IconSymbol name="filter" size={17} color="#FFFFFF" /><Text style={styles.filterButtonText}>Filtros</Text></Pressable>
+        {highRiskAlert && <Pressable onPress={() => selectEvent(highRiskAlert)} style={({ pressed }) => [styles.riskAlert, pressed && styles.pressed]}><View style={styles.alertIcon}><IconSymbol name="warnings" size={21} color="#FFFFFF" /></View><View style={styles.alertCopy}><Text style={styles.alertEyebrow}>ALERTA DE ALTO RISCO · NO ENTORNO</Text><Text style={styles.alertTitle} numberOfLines={1}>{highRiskAlert.title}</Text><Text style={styles.alertTime}>Janela estimada: {formatDateTime(highRiskAlert.time)}</Text></View><IconSymbol name="chevron.right" size={21} color="#FFE1E5" /></Pressable>}
         <View style={styles.summary}>
           <View style={styles.summaryHeader}>
             <View><Text style={styles.location}>{coordinates.label}</Text><Text style={styles.source}>{coordinates.source === "gps" ? "LOCALIZAÇÃO ATUAL" : "LOCALIZAÇÃO DE DEMONSTRAÇÃO"}</Text></View>
@@ -55,6 +57,12 @@ const styles = StyleSheet.create({
   statusText: { color: "#35516D", fontSize: 11, lineHeight: 15, fontWeight: "700" },
   filterButton: { position: "absolute", top: 110, left: 18, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#1677C8", borderRadius: 16, paddingHorizontal: 12, minHeight: 34, shadowColor: "#0B1B3A", shadowOpacity: 0.12, shadowRadius: 6, elevation: 3 },
   filterButtonText: { color: "#FFFFFF", fontSize: 11, lineHeight: 15, fontWeight: "800" },
+  riskAlert: { position: "absolute", top: 157, left: 18, right: 18, borderRadius: 18, padding: 12, backgroundColor: "#B93E51", flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#792535", shadowOpacity: 0.24, shadowRadius: 10, elevation: 5 },
+  alertIcon: { width: 38, height: 38, borderRadius: 13, backgroundColor: "#D95363", alignItems: "center", justifyContent: "center" },
+  alertCopy: { flex: 1, minWidth: 0 },
+  alertEyebrow: { color: "#FFE1E5", fontSize: 8, lineHeight: 12, letterSpacing: 0.65, fontWeight: "800" },
+  alertTitle: { color: "#FFFFFF", fontSize: 14, lineHeight: 19, fontWeight: "800", marginTop: 1 },
+  alertTime: { color: "#FFD1D8", fontSize: 10, lineHeight: 14, fontWeight: "600", marginTop: 1 },
   summary: { position: "absolute", left: 14, right: 14, bottom: 13, padding: 17, backgroundColor: "#FFFFFF", borderRadius: 24, shadowColor: "#0B1B3A", shadowOpacity: 0.16, shadowRadius: 14, elevation: 5 },
   summaryHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
   location: { color: "#1B2F49", fontSize: 17, lineHeight: 22, fontWeight: "800" },

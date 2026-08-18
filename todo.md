@@ -20,3 +20,4 @@
 - [x] Exibir contagem de eventos ativos ao lado de cada categoria de filtro
 - [x] Adicionar filtro de eventos por nível de severidade no painel lateral
 - [x] Persistir as preferências de filtros para reutilizá-las nas próximas aberturas
+- [x] Adicionar alerta visual na tela principal para eventos de alto risco próximos

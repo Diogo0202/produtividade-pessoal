@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import type { Coordinates, RiskLevel, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "@/lib/weather-types";
-import { buildWeatherEvents, FALLBACK_COORDINATES, filterWeatherEvents, parseWeatherResponse } from "@/lib/weather-utils";
+import { buildWeatherEvents, FALLBACK_COORDINATES, filterWeatherEvents, getNearbyHighRiskEvents, parseWeatherResponse } from "@/lib/weather-utils";
 
 const FILTER_PREFERENCES_KEY = "radar-tempo-filter-preferences-v1";
 const EVENT_KINDS: WeatherEventKind[] = ["trovoada", "chuva", "vento", "calor", "visibilidade"];
@@ -15,6 +15,7 @@ type WeatherContextValue = {
   coordinates: Coordinates;
   snapshot: WeatherSnapshot | null;
   events: WeatherEvent[];
+  nearbyHighRiskEvents: WeatherEvent[];
   eventCounts: Record<WeatherEventKind, number>;
   activeEventKinds: WeatherEventKind[];
   activeRiskLevels: RiskLevel[];
@@ -149,13 +150,14 @@ export function WeatherProvider({ children }: PropsWithChildren) {
     calor: allEvents.filter((event) => event.kind === "calor").length,
     visibilidade: allEvents.filter((event) => event.kind === "visibilidade").length,
   }), [allEvents]);
+  const nearbyHighRiskEvents = useMemo(() => getNearbyHighRiskEvents(allEvents, coordinates), [allEvents, coordinates]);
   const events = useMemo(() => filterWeatherEvents(allEvents, activeEventKinds, activeRiskLevels), [activeEventKinds, activeRiskLevels, allEvents]);
   const toggleEventKind = useCallback((kind: WeatherEventKind) => setActiveEventKinds((current) => current.includes(kind) ? current.filter((item) => item !== kind) : [...current, kind]), []);
   const toggleRiskLevel = useCallback((level: RiskLevel) => setActiveRiskLevels((current) => current.includes(level) ? current.filter((item) => item !== level) : [...current, level]), []);
   const clearEventKinds = useCallback(() => setActiveEventKinds([]), []);
   const clearRiskLevels = useCallback(() => setActiveRiskLevels([]), []);
   const clearAllFilters = useCallback(() => { setActiveEventKinds([]); setActiveRiskLevels([]); }, []);
-  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters }), [coordinates, snapshot, events, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters]);
+  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, nearbyHighRiskEvents, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters }), [coordinates, snapshot, events, nearbyHighRiskEvents, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters]);
 
   return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>;
 }

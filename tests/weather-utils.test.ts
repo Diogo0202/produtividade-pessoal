@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, parseWeatherResponse } from "../lib/weather-utils";
+import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, getNearbyHighRiskEvents, parseWeatherResponse } from "../lib/weather-utils";
 
 const coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" as const };
 
@@ -42,5 +42,11 @@ describe("utilitários meteorológicos", () => {
     const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
     expect(filterWeatherEvents(events, [], ["alto"]).every((event) => event.level === "alto")).toBe(true);
     expect(filterWeatherEvents(events, ["chuva", "trovoada"], ["alto"]).map((event) => event.kind)).toEqual(["chuva"]);
+  });
+
+  it("destaca apenas riscos altos dentro do entorno configurado", () => {
+    const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
+    expect(getNearbyHighRiskEvents(events, coordinates).map((event) => event.kind)).toEqual(["chuva", "vento", "visibilidade"]);
+    expect(getNearbyHighRiskEvents(events, coordinates, 0.1)).toHaveLength(0);
   });
 });
