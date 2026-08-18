@@ -13,17 +13,17 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#3B5BDB",
-        tabBarInactiveTintColor: "#8B94A5",
+        tabBarActiveTintColor: "#1677C8",
+        tabBarInactiveTintColor: "#71849B",
         tabBarButton: HapticTab,
         tabBarLabelStyle: { fontSize: 10, fontWeight: "700", marginTop: 2 },
-        tabBarStyle: { height: 58 + bottomPadding, paddingTop: 7, paddingBottom: bottomPadding, backgroundColor: "#FFFFFF", borderTopWidth: 0.5, borderTopColor: "#E4E7EF" },
+        tabBarStyle: { height: 58 + bottomPadding, paddingTop: 7, paddingBottom: bottomPadding, backgroundColor: "#FFFFFF", borderTopWidth: 0.5, borderTopColor: "#DDE6EF" },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Hoje", tabBarIcon: ({ color }) => <IconSymbol name="house.fill" size={24} color={color} /> }} />
-      <Tabs.Screen name="tasks" options={{ title: "Tarefas", tabBarIcon: ({ color }) => <IconSymbol name="checklist" size={24} color={color} /> }} />
-      <Tabs.Screen name="plan" options={{ title: "Planejar", tabBarIcon: ({ color }) => <IconSymbol name="calendar" size={24} color={color} /> }} />
-      <Tabs.Screen name="goals" options={{ title: "Metas", tabBarIcon: ({ color }) => <IconSymbol name="target" size={24} color={color} /> }} />
+      <Tabs.Screen name="index" options={{ title: "Mapa", tabBarIcon: ({ color }) => <IconSymbol name="map" size={24} color={color} /> }} />
+      <Tabs.Screen name="now" options={{ title: "Agora", tabBarIcon: ({ color }) => <IconSymbol name="cloud" size={24} color={color} /> }} />
+      <Tabs.Screen name="events" options={{ title: "Eventos", tabBarIcon: ({ color }) => <IconSymbol name="warnings" size={24} color={color} /> }} />
+      <Tabs.Screen name="about" options={{ title: "Dados", tabBarIcon: ({ color }) => <IconSymbol name="data" size={24} color={color} /> }} />
     </Tabs>
   );
 }

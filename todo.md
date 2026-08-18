@@ -9,3 +9,9 @@
 - [x] Implementar acompanhamento de metas e atualização de progresso
 - [x] Validar os fluxos, a tipagem e o comportamento responsivo do aplicativo
 - [x] Adicionar recorrência semanal com seleção de dias e geração das próximas tarefas
+- [x] Iniciar projeto separado de monitoramento meteorológico com mapa de eventos e conteúdo preventivo
+- [x] Definir fontes de previsão e avisos oficiais para o aplicativo meteorológico
+- [x] Planejar telas de mapa, eventos e conteúdo de prevenção
+- [x] Implementar localização, previsão por coordenadas e classificação transparente de riscos
+- [x] Implementar mapa e fichas interativas de fenômenos climáticos
+- [x] Validar permissões, atualização de dados e fontes exibidas ao usuário
