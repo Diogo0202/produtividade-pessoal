@@ -8,3 +8,4 @@
 - [x] Implementar planejamento diário com linha do tempo e seleção de data
 - [x] Implementar acompanhamento de metas e atualização de progresso
 - [x] Validar os fluxos, a tipagem e o comportamento responsivo do aplicativo
+- [x] Adicionar recorrência semanal com seleção de dias e geração das próximas tarefas

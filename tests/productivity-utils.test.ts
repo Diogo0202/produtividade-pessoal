@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getGoalProgress, getTaskStats, getTodayKey } from "../lib/productivity-utils";
+import { formatWeeklyDays, getGoalProgress, getTaskStats, getTodayKey, getWeeklyOccurrenceDates } from "../lib/productivity-utils";
 
 describe("utilitários de produtividade", () => {
   it("gera uma chave local de data estável", () => {
@@ -18,5 +18,17 @@ describe("utilitários de produtividade", () => {
 
   it("limita o progresso de uma meta ao intervalo de zero a cem", () => {
     expect(getGoalProgress({ id: "goal", title: "Ler", unit: "páginas", currentValue: 150, targetValue: 100, color: "#3B5BDB", createdAt: "" })).toBe(100);
+  });
+
+  it("gera as ocorrências dos dias selecionados nos próximos oito ciclos semanais", () => {
+    const dates = getWeeklyOccurrenceDates("2026-08-17", [1, 3]);
+    expect(dates).toHaveLength(16);
+    expect(dates.slice(0, 4)).toEqual(["2026-08-17", "2026-08-19", "2026-08-24", "2026-08-26"]);
+    expect(dates.at(-1)).toBe("2026-10-07");
+  });
+
+  it("resume os dias de recorrência semanal para a interface", () => {
+    expect(formatWeeklyDays([1, 3, 5])).toBe("Seg, Qua, Sex");
+    expect(formatWeeklyDays([0, 1, 2, 3, 4, 5, 6])).toBe("todos os dias");
   });
 });
