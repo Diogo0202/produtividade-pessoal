@@ -17,3 +17,6 @@
 - [x] Validar permissões, atualização de dados e fontes exibidas ao usuário
 - [x] Adicionar filtros de tipos climáticos para controlar mapa e lista de eventos
 - [x] Adicionar painel lateral de filtro com checklist de eventos climáticos no mapa
+- [x] Exibir contagem de eventos ativos ao lado de cada categoria de filtro
+- [x] Adicionar filtro de eventos por nível de severidade no painel lateral
+- [x] Persistir as preferências de filtros para reutilizá-las nas próximas aberturas

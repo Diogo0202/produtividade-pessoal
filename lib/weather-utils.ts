@@ -91,9 +91,12 @@ export function buildWeatherEvents(hours: ForecastHour[], coordinates: Coordinat
   return events.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 }
 
-export function filterWeatherEvents(events: WeatherEvent[], selectedKinds: WeatherEventKind[]) {
-  if (!selectedKinds.length) return events;
-  return events.filter((event) => selectedKinds.includes(event.kind));
+export function filterWeatherEvents(events: WeatherEvent[], selectedKinds: WeatherEventKind[] = [], selectedLevels: RiskLevel[] = []) {
+  return events.filter((event) => {
+    const matchesKind = !selectedKinds.length || selectedKinds.includes(event.kind);
+    const matchesLevel = !selectedLevels.length || selectedLevels.includes(event.level);
+    return matchesKind && matchesLevel;
+  });
 }
 
 export function parseWeatherResponse(data: any): WeatherSnapshot {

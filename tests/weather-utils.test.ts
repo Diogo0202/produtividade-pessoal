@@ -37,4 +37,10 @@ describe("utilitários meteorológicos", () => {
     expect(filterWeatherEvents(events, ["trovoada", "calor"]).map((event) => event.kind)).toEqual(["trovoada", "calor"]);
     expect(filterWeatherEvents(events, [])).toHaveLength(events.length);
   });
+
+  it("combina filtros de tipo e severidade para priorizar eventos perigosos", () => {
+    const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
+    expect(filterWeatherEvents(events, [], ["alto"]).every((event) => event.level === "alto")).toBe(true);
+    expect(filterWeatherEvents(events, ["chuva", "trovoada"], ["alto"]).map((event) => event.kind)).toEqual(["chuva"]);
+  });
 });
