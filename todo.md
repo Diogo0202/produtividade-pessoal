@@ -16,3 +16,4 @@
 - [x] Implementar mapa e fichas interativas de fenômenos climáticos
 - [x] Validar permissões, atualização de dados e fontes exibidas ao usuário
 - [x] Adicionar filtros de tipos climáticos para controlar mapa e lista de eventos
+- [x] Adicionar painel lateral de filtro com checklist de eventos climáticos no mapa
