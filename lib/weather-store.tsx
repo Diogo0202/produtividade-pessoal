@@ -2,10 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import type { Coordinates, RiskLevel, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "@/lib/weather-types";
-import { buildWeatherEvents, FALLBACK_COORDINATES, filterWeatherEvents, getNearbyHighRiskEvents, parseWeatherResponse } from "@/lib/weather-utils";
+import type { Coordinates, RiskLevel, WeatherAlertHistoryEntry, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "@/lib/weather-types";
+import { buildWeatherEvents, FALLBACK_COORDINATES, filterWeatherEvents, getNearbyHighRiskEvents, mergeAlertHistory, parseWeatherResponse } from "@/lib/weather-utils";
 
 const FILTER_PREFERENCES_KEY = "radar-tempo-filter-preferences-v1";
+const ALERT_HISTORY_KEY = "radar-tempo-high-risk-history-v1";
 const EVENT_KINDS: WeatherEventKind[] = ["trovoada", "chuva", "vento", "calor", "visibilidade"];
 const RISK_LEVELS: RiskLevel[] = ["alto", "moderado"];
 
@@ -16,6 +17,7 @@ type WeatherContextValue = {
   snapshot: WeatherSnapshot | null;
   events: WeatherEvent[];
   nearbyHighRiskEvents: WeatherEvent[];
+  alertHistory: WeatherAlertHistoryEntry[];
   eventCounts: Record<WeatherEventKind, number>;
   activeEventKinds: WeatherEventKind[];
   activeRiskLevels: RiskLevel[];
@@ -32,6 +34,7 @@ type WeatherContextValue = {
   clearEventKinds: () => void;
   clearRiskLevels: () => void;
   clearAllFilters: () => void;
+  clearAlertHistory: () => void;
 };
 
 const WeatherContext = createContext<WeatherContextValue | null>(null);
@@ -67,6 +70,8 @@ export function WeatherProvider({ children }: PropsWithChildren) {
   const [activeEventKinds, setActiveEventKinds] = useState<WeatherEventKind[]>([]);
   const [activeRiskLevels, setActiveRiskLevels] = useState<RiskLevel[]>([]);
   const [preferencesReady, setPreferencesReady] = useState(false);
+  const [alertHistory, setAlertHistory] = useState<WeatherAlertHistoryEntry[]>([]);
+  const [historyReady, setHistoryReady] = useState(false);
 
   const refresh = useCallback(async (coordinatesOverride?: Coordinates) => {
     const target = coordinatesOverride ?? coordinates;
@@ -113,6 +118,24 @@ export function WeatherProvider({ children }: PropsWithChildren) {
     void AsyncStorage.setItem(FILTER_PREFERENCES_KEY, JSON.stringify({ eventKinds: activeEventKinds, riskLevels: activeRiskLevels }));
   }, [activeEventKinds, activeRiskLevels, preferencesReady]);
 
+  useEffect(() => {
+    let active = true;
+    async function restoreHistory() {
+      try {
+        const raw = await AsyncStorage.getItem(ALERT_HISTORY_KEY);
+        if (!raw || !active) return;
+        const saved = JSON.parse(raw) as WeatherAlertHistoryEntry[];
+        setAlertHistory(Array.isArray(saved) ? saved.slice(0, 30) : []);
+      } catch {
+        // O histórico é local e pode recomeçar se houver dados inválidos.
+      } finally {
+        if (active) setHistoryReady(true);
+      }
+    }
+    void restoreHistory();
+    return () => { active = false; };
+  }, []);
+
   const requestLocation = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -152,12 +175,24 @@ export function WeatherProvider({ children }: PropsWithChildren) {
   }), [allEvents]);
   const nearbyHighRiskEvents = useMemo(() => getNearbyHighRiskEvents(allEvents, coordinates), [allEvents, coordinates]);
   const events = useMemo(() => filterWeatherEvents(allEvents, activeEventKinds, activeRiskLevels), [activeEventKinds, activeRiskLevels, allEvents]);
+
+  useEffect(() => {
+    if (!historyReady || !nearbyHighRiskEvents.length) return;
+    setAlertHistory((current) => mergeAlertHistory(current, nearbyHighRiskEvents, coordinates));
+  }, [coordinates, historyReady, nearbyHighRiskEvents]);
+
+  useEffect(() => {
+    if (!historyReady) return;
+    void AsyncStorage.setItem(ALERT_HISTORY_KEY, JSON.stringify(alertHistory));
+  }, [alertHistory, historyReady]);
+
   const toggleEventKind = useCallback((kind: WeatherEventKind) => setActiveEventKinds((current) => current.includes(kind) ? current.filter((item) => item !== kind) : [...current, kind]), []);
   const toggleRiskLevel = useCallback((level: RiskLevel) => setActiveRiskLevels((current) => current.includes(level) ? current.filter((item) => item !== level) : [...current, level]), []);
   const clearEventKinds = useCallback(() => setActiveEventKinds([]), []);
   const clearRiskLevels = useCallback(() => setActiveRiskLevels([]), []);
   const clearAllFilters = useCallback(() => { setActiveEventKinds([]); setActiveRiskLevels([]); }, []);
-  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, nearbyHighRiskEvents, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters }), [coordinates, snapshot, events, nearbyHighRiskEvents, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters]);
+  const clearAlertHistory = useCallback(() => setAlertHistory([]), []);
+  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, nearbyHighRiskEvents, alertHistory, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters, clearAlertHistory }), [coordinates, snapshot, events, nearbyHighRiskEvents, alertHistory, eventCounts, activeEventKinds, activeRiskLevels, preferencesReady, loading, error, locationState, selectedEvent, requestLocation, refresh, toggleEventKind, toggleRiskLevel, clearEventKinds, clearRiskLevels, clearAllFilters, clearAlertHistory]);
 
   return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>;
 }

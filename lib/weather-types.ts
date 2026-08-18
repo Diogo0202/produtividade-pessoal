@@ -16,6 +16,14 @@ export type WeatherEvent = {
   metrics: Array<{ label: string; value: string }>;
 };
 
+export type WeatherAlertHistoryEntry = {
+  id: string;
+  event: WeatherEvent;
+  regionLabel: string;
+  regionKey: string;
+  recordedAt: string;
+};
+
 export type CurrentWeather = {
   temperature: number;
   apparentTemperature: number;

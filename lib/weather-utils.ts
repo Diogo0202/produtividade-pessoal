@@ -1,5 +1,5 @@
 import { WEATHER_KNOWLEDGE } from "./weather-knowledge";
-import type { Coordinates, ForecastHour, RiskLevel, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "./weather-types";
+import type { Coordinates, ForecastHour, RiskLevel, WeatherAlertHistoryEntry, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "./weather-types";
 
 export const FALLBACK_COORDINATES: Coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" };
 
@@ -109,6 +109,21 @@ export function distanceInKm(from: Coordinates, to: Pick<WeatherEvent, "latitude
 
 export function getNearbyHighRiskEvents(events: WeatherEvent[], coordinates: Coordinates, radiusKm = 5) {
   return events.filter((event) => event.level === "alto" && distanceInKm(coordinates, event) <= radiusKm);
+}
+
+export function mergeAlertHistory(existing: WeatherAlertHistoryEntry[], events: WeatherEvent[], coordinates: Coordinates, recordedAt = new Date().toISOString()) {
+  const regionKey = `${coordinates.latitude.toFixed(2)},${coordinates.longitude.toFixed(2)}`;
+  const incoming = events.map((event): WeatherAlertHistoryEntry => ({
+    id: `${regionKey}-${event.id}`,
+    event,
+    regionLabel: coordinates.label,
+    regionKey,
+    recordedAt,
+  }));
+  const known = new Set(incoming.map((entry) => entry.id));
+  return [...incoming, ...existing.filter((entry) => !known.has(entry.id))]
+    .sort((first, second) => new Date(second.recordedAt).getTime() - new Date(first.recordedAt).getTime())
+    .slice(0, 30);
 }
 
 export function parseWeatherResponse(data: any): WeatherSnapshot {

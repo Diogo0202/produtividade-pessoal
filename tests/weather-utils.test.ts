@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, getNearbyHighRiskEvents, parseWeatherResponse } from "../lib/weather-utils";
+import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, getNearbyHighRiskEvents, mergeAlertHistory, parseWeatherResponse } from "../lib/weather-utils";
 
 const coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" as const };
 
@@ -48,5 +48,15 @@ describe("utilitários meteorológicos", () => {
     const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
     expect(getNearbyHighRiskEvents(events, coordinates).map((event) => event.kind)).toEqual(["chuva", "vento", "visibilidade"]);
     expect(getNearbyHighRiskEvents(events, coordinates, 0.1)).toHaveLength(0);
+  });
+
+  it("registra alertas locais sem duplicar eventos já identificados", () => {
+    const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
+    const highRisk = getNearbyHighRiskEvents(events, coordinates);
+    const firstRecord = mergeAlertHistory([], highRisk, coordinates, "2026-08-19T10:00:00.000Z");
+    const updatedRecord = mergeAlertHistory(firstRecord, highRisk, coordinates, "2026-08-19T11:00:00.000Z");
+    expect(firstRecord).toHaveLength(3);
+    expect(updatedRecord).toHaveLength(3);
+    expect(updatedRecord[0].regionLabel).toBe("São Paulo, SP");
   });
 });

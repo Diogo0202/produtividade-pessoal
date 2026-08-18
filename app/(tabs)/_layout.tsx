@@ -23,7 +23,11 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: "Mapa", tabBarIcon: ({ color }) => <IconSymbol name="map" size={24} color={color} /> }} />
       <Tabs.Screen name="now" options={{ title: "Agora", tabBarIcon: ({ color }) => <IconSymbol name="cloud" size={24} color={color} /> }} />
       <Tabs.Screen name="events" options={{ title: "Eventos", tabBarIcon: ({ color }) => <IconSymbol name="warnings" size={24} color={color} /> }} />
+      <Tabs.Screen name="history" options={{ title: "Histórico", tabBarIcon: ({ color }) => <IconSymbol name="history" size={24} color={color} /> }} />
       <Tabs.Screen name="about" options={{ title: "Dados", tabBarIcon: ({ color }) => <IconSymbol name="data" size={24} color={color} /> }} />
+      <Tabs.Screen name="plan" options={{ href: null }} />
+      <Tabs.Screen name="goals" options={{ href: null }} />
+      <Tabs.Screen name="tasks" options={{ href: null }} />
     </Tabs>
   );
 }
