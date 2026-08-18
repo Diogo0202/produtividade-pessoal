@@ -1,68 +1,102 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { WeatherMap } from "@/components/weather/weather-map";
-import { WeatherFilters } from "@/components/weather/weather-filters";
+import { EmptyState } from "@/components/productivity/empty-state";
+import { TaskRow } from "@/components/productivity/task-row";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ScreenContainer } from "@/components/screen-container";
-import { useWeather } from "@/lib/weather-store";
-import { getConditionIcon, getConditionLabel } from "@/lib/weather-utils";
+import { useProductivity } from "@/lib/productivity-store";
+import { formatLongDate, getTaskStats, getTodayKey } from "@/lib/productivity-utils";
 
-export default function MapScreen() {
-  const { coordinates, snapshot, events, loading, error, locationState, requestLocation, refresh, selectEvent } = useWeather();
-  const current = snapshot?.current;
+export default function TodayScreen() {
+  const { tasks, hydrated, openTaskComposer } = useProductivity();
+  const today = getTodayKey();
+  const todaysTasks = tasks.filter((task) => task.date === today).sort((a, b) => (a.time ?? "99:99").localeCompare(b.time ?? "99:99"));
+  const stats = getTaskStats(tasks, today);
+  const nextTask = todaysTasks.find((task) => !task.completed);
+  const progress = Math.round(stats.completionRatio * 100);
+  const greeting = new Date().getHours() < 12 ? "Bom dia" : new Date().getHours() < 18 ? "Boa tarde" : "Boa noite";
+
+  if (!hydrated) return <ScreenContainer><View style={styles.loader}><ActivityIndicator color="#3B5BDB" /></View></ScreenContainer>;
 
   return (
-    <ScreenContainer edges={["top", "left", "right"]} containerClassName="bg-background">
-      <View style={styles.page}>
-        <WeatherMap coordinates={coordinates} events={events} onEventPress={selectEvent} />
-        <View style={styles.topOverlay}>
-          <View style={styles.brand}>
-            <View style={styles.brandIcon}><IconSymbol name="radar" size={20} color="#FFFFFF" /></View>
-            <View><Text style={styles.brandName}>Radar do Tempo</Text><Text style={styles.brandCaption}>PREVISÃO LOCAL</Text></View>
-          </View>
-          <Pressable onPress={() => void refresh()} style={({ pressed }) => [styles.refresh, pressed && styles.pressed]}><IconSymbol name="refresh" size={20} color="#FFFFFF" /></Pressable>
-        </View>
-        <View style={styles.statusChip}><View style={styles.statusDot} /><Text style={styles.statusText}>{events.length ? `${events.length} sinais no entorno` : "Sem risco relevante previsto"}</Text></View>
-        <View style={styles.filters}><WeatherFilters compact /></View>
-        <View style={styles.summary}>
-          <View style={styles.summaryHeader}>
-            <View><Text style={styles.location}>{coordinates.label}</Text><Text style={styles.source}>{coordinates.source === "gps" ? "LOCALIZAÇÃO ATUAL" : "LOCALIZAÇÃO DE DEMONSTRAÇÃO"}</Text></View>
-            {loading ? <ActivityIndicator color="#1677C8" /> : <IconSymbol name={current ? getConditionIcon(current.weatherCode, current.isDay) : "cloud"} size={36} color="#1677C8" />}
-          </View>
-          {current ? <View style={styles.weatherLine}><Text style={styles.temperature}>{Math.round(current.temperature)}°</Text><View><Text style={styles.condition}>{getConditionLabel(current.weatherCode)}</Text><Text style={styles.feels}>Sensação de {Math.round(current.apparentTemperature)}° · Vento {Math.round(current.windSpeed)} km/h</Text></View></View> : <Text style={styles.loadingCopy}>Carregando a previsão por coordenadas…</Text>}
-          {locationState !== "granted" && <Pressable onPress={() => void requestLocation()} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><IconSymbol name="location" size={17} color="#FFFFFF" /><Text style={styles.locationButtonText}>Usar minha localização</Text></Pressable>}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Text style={styles.disclaimer}>Marcadores indicam riscos previstos; toque para entender o fenômeno.</Text>
-        </View>
-      </View>
+    <ScreenContainer containerClassName="bg-background">
+      <FlatList
+        data={todaysTasks}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.greeting}>{greeting}</Text>
+                <Text style={styles.date}>{formatLongDate(today)}</Text>
+              </View>
+              <View style={styles.avatar}><Text style={styles.avatarText}>R</Text></View>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryTop}>
+                <View>
+                  <Text style={styles.summaryEyebrow}>SEU RITMO DE HOJE</Text>
+                  <Text style={styles.summaryValue}>{stats.completed}<Text style={styles.summarySmall}>/{stats.total}</Text></Text>
+                  <Text style={styles.summaryCopy}>{stats.total ? "tarefas concluídas" : "um dia pronto para começar"}</Text>
+                </View>
+                <View style={styles.percentBubble}><Text style={styles.percentText}>{progress}%</Text></View>
+              </View>
+              <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress}%` }]} /></View>
+            </View>
+
+            <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Seu foco agora</Text><Text style={styles.sectionCaption}>{nextTask ? "PRÓXIMA AÇÃO" : "ESPAÇO ABERTO"}</Text></View>
+            <View style={styles.focusCard}>
+              <View style={styles.focusIcon}><IconSymbol name={nextTask ? "clock.fill" : "sparkles"} size={20} color="#3B5BDB" /></View>
+              <View style={styles.focusTextWrap}>
+                <Text style={styles.focusTitle}>{nextTask ? nextTask.title : "Comece com uma intenção"}</Text>
+                <Text style={styles.focusDescription}>{nextTask ? `${nextTask.time ? `${nextTask.time} · ` : ""}Escolha um pequeno próximo passo.` : "Organize uma tarefa e transforme o tempo em progresso."}</Text>
+              </View>
+            </View>
+
+            <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Hoje</Text><Text style={styles.sectionCaption}>{stats.total} {stats.total === 1 ? "TAREFA" : "TAREFAS"}</Text></View>
+          </>
+        }
+        ListEmptyComponent={<EmptyState icon="checklist" title="Seu dia está leve" description="Adicione a primeira tarefa para transformar intenção em ação." actionLabel="Adicionar tarefa" onAction={() => openTaskComposer(undefined, { date: today })} />}
+        renderItem={({ item }) => <TaskRow task={item} />}
+        ListFooterComponent={<View style={styles.bottomPadding} />}
+      />
+      <Pressable onPress={() => openTaskComposer(undefined, { date: today })} style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}>
+        <IconSymbol name="plus" size={28} color="#FFFFFF" />
+      </Pressable>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#DDF0FF" },
-  topOverlay: { position: "absolute", top: 12, left: 17, right: 17, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  brand: { flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: "rgba(11,27,58,0.92)", paddingVertical: 8, paddingLeft: 8, paddingRight: 12, borderRadius: 17 },
-  brandIcon: { width: 32, height: 32, borderRadius: 11, backgroundColor: "#1677C8", alignItems: "center", justifyContent: "center" },
-  brandName: { color: "#FFFFFF", fontSize: 14, lineHeight: 18, fontWeight: "800" },
-  brandCaption: { color: "#A9C5E4", fontSize: 8, lineHeight: 11, letterSpacing: 0.8, fontWeight: "800" },
-  refresh: { width: 39, height: 39, borderRadius: 20, backgroundColor: "rgba(11,27,58,0.92)", alignItems: "center", justifyContent: "center" },
-  statusChip: { position: "absolute", top: 72, left: 18, backgroundColor: "rgba(255,255,255,0.93)", borderRadius: 15, paddingHorizontal: 10, paddingVertical: 7, flexDirection: "row", gap: 6, alignItems: "center" },
-  statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#2DA77A" },
-  statusText: { color: "#35516D", fontSize: 11, lineHeight: 15, fontWeight: "700" },
-  filters: { position: "absolute", top: 109, left: 18, right: 0 },
-  summary: { position: "absolute", left: 14, right: 14, bottom: 13, padding: 17, backgroundColor: "#FFFFFF", borderRadius: 24, shadowColor: "#0B1B3A", shadowOpacity: 0.16, shadowRadius: 14, elevation: 5 },
-  summaryHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
-  location: { color: "#1B2F49", fontSize: 17, lineHeight: 22, fontWeight: "800" },
-  source: { color: "#72859B", fontSize: 9, lineHeight: 13, letterSpacing: 0.75, fontWeight: "800", marginTop: 1 },
-  weatherLine: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
-  temperature: { color: "#162B47", fontSize: 44, lineHeight: 49, fontWeight: "800" },
-  condition: { color: "#253A55", fontSize: 14, lineHeight: 19, fontWeight: "800" },
-  feels: { color: "#71849B", fontSize: 11, lineHeight: 16, fontWeight: "600", marginTop: 1 },
-  locationButton: { minHeight: 43, borderRadius: 13, backgroundColor: "#1677C8", marginTop: 13, flexDirection: "row", gap: 7, justifyContent: "center", alignItems: "center" },
-  locationButtonText: { color: "#FFFFFF", fontSize: 13, lineHeight: 18, fontWeight: "800" },
-  disclaimer: { color: "#7C8FA3", fontSize: 10, lineHeight: 14, fontWeight: "600", marginTop: 11 },
-  error: { color: "#C34F5F", fontSize: 11, lineHeight: 16, fontWeight: "600", marginTop: 8 },
-  loadingCopy: { color: "#71849B", fontSize: 13, lineHeight: 18, fontWeight: "600", marginTop: 12 },
-  pressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
-});
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 100 },
+  loader: { flex: 1, alignItems: "center", justifyContent: "center" },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 22 },
+  greeting: { color: "#1D2433", fontSize: 26, lineHeight: 32, fontWeight: "850" },
+  date: { color: "#7B8496", fontSize: 14, lineHeight: 20, fontWeight: "600", textTransform: "capitalize", marginTop: 1 },
+  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#E8ECFF", justifyContent: "center", alignItems: "center" },
+  avatarText: { color: "#3B5BDB", fontSize: 17, lineHeight: 21, fontWeight: "850" },
+  summaryCard: { backgroundColor: "#3B5BDB", borderRadius: 24, padding: 20, shadowColor: "#3B5BDB", shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
+  summaryTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  summaryEyebrow: { color: "#C9D2FF", fontSize: 10, lineHeight: 14, letterSpacing: 1, fontWeight: "800" },
+  summaryValue: { color: "#FFFFFF", fontSize: 36, lineHeight: 42, fontWeight: "850", marginTop: 3 },
+  summarySmall: { color: "#BBC7FF", fontSize: 20 },
+  summaryCopy: { color: "#DCE2FF", fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  percentBubble: { backgroundColor: "rgba(255,255,255,0.14)", width: 54, height: 54, borderRadius: 27, alignItems: "center", justifyContent: "center" },
+  percentText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontWeight: "850" },
+  progressTrack: { height: 7, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.2)", marginTop: 17, overflow: "hidden" },
+  progressFill: { height: 7, borderRadius: 4, backgroundColor: "#A8E6CC" },
+  sectionHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 27, marginBottom: 11 },
+  sectionTitle: { color: "#1D2433", fontSize: 18, lineHeight: 24, fontWeight: "850" },
+  sectionCaption: { color: "#8B94A5", fontSize: 10, lineHeight: 14, letterSpacing: 0.7, fontWeight: "800" },
+  focusCard: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EEF0F5", borderRadius: 19, padding: 15, flexDirection: "row", alignItems: "center" },
+  focusIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: "#ECF0FF", justifyContent: "center", alignItems: "center", marginRight: 12 },
+  focusTextWrap: { flex: 1 },
+  focusTitle: { color: "#283042", fontSize: 15, lineHeight: 20, fontWeight: "800" },
+  focusDescription: { color: "#7A8495", fontSize: 12, lineHeight: 17, fontWeight: "600", marginTop: 2 },
+  fab: { position: "absolute", right: 22, bottom: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#3B5BDB", alignItems: "center", justifyContent: "center", shadowColor: "#3B5BDB", shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
+  fabPressed: { opacity: 0.88, transform: [{ scale: 0.96 }] },
+  bottomPadding: { height: 14 },
+} as any);

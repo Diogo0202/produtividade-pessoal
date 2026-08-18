@@ -1,52 +1,52 @@
-# Plano de Interface — Radar do Tempo
+# Plano de Interface — Ritmo
 
 ## Direção do produto
 
-**Radar do Tempo** é um aplicativo de consciência meteorológica para orientação retrato e uso rápido com uma mão. Ele combina a localização atual do usuário, previsão por coordenadas e sinais de risco derivados de variáveis meteorológicas. A interface deve diferenciar de maneira inequívoca **risco previsto** de **aviso oficial**, evitando apresentar previsões modeladas como um alerta confirmado.
+**Ritmo** é um organizador pessoal para uso diário, em orientação retrato, que une três perguntas em uma mesma experiência: o que preciso fazer agora, onde cabe isso na minha semana e como isso contribui para uma meta. A interface prioriza leitura rápida, ações ao alcance do polegar e dados locais no dispositivo, sem conta ou sincronização em nuvem nesta primeira versão.
 
 ## Lista de telas
 
-| Tela | Conteúdo e estrutura | Funcionalidade principal |
+| Tela | Conteúdo principal | Funções principais |
 |---|---|---|
-| Mapa | Mapa de contexto, ponto da localização, marcadores de eventos previstos e pílula de atualização | Visualizar os riscos no entorno e tocar um marcador para abrir seu detalhe |
-| Agora | Resumo de temperatura, condição atual, vento, UV, precipitação e faixa de confiança da previsão | Atualizar dados e abrir a visualização no mapa |
-| Eventos | Lista ordenada por severidade e hora prevista, com fonte e status do evento | Filtrar riscos e abrir a ficha de cada fenômeno |
-| Ficha do evento | Severidade, janela estimada, sinais que levaram à classificação, formação, mitigação, estação mais comum e fonte | Ler orientações de segurança e consultar o aviso oficial quando disponível |
-| Sobre os dados | Data/hora da atualização, modelo de previsão, legenda de risco e link para avisos oficiais | Dar transparência à origem, atualização e limites das informações |
+| Hoje | Saudação contextual, resumo do dia, progresso, próxima tarefa e lista de tarefas de hoje | Marcar tarefa como concluída, abrir criação rápida e navegar para as áreas do produto |
+| Tarefas | Lista filtrável por estado, prioridade e prazo | Criar, concluir, editar e excluir tarefas; associar cada tarefa a uma meta opcional |
+| Planejar | Faixa de dias da semana, linha do tempo diária e blocos de tarefas agendadas | Selecionar o dia, ver tarefas com horário e abrir nova tarefa com data/hora |
+| Metas | Cartões de metas com progresso mensurável e tarefas vinculadas | Criar meta, atualizar progresso e encerrar uma meta quando concluída |
+| Criar / editar tarefa | Formulário em folha modal com título, prioridade, data, horário e meta | Salvar uma tarefa completa ou criar uma tarefa simples sem planejamento |
+| Criar / editar meta | Formulário em folha modal com título, horizonte, valor-meta e unidade | Salvar uma meta e ajustar o progresso atual |
 
 ## Fluxos prioritários
 
-| Fluxo | Caminho | Resultado |
+| Fluxo | Caminho | Resultado esperado |
 |---|---|---|
-| Ver o cenário local | Abrir aplicativo → conceder localização durante o uso → dados por coordenadas são carregados | O mapa centraliza o usuário e exibe condições e riscos previstos no entorno |
-| Explorar um risco | Tocar marcador no mapa ou item da lista → abrir folha de detalhe | O usuário entende o tipo, a janela de ocorrência, os gatilhos do modelo e ações de mitigação |
-| Ver a condição atual | Aba “Agora” → tocar “Atualizar” | A tela consulta a previsão novamente e informa o horário da resposta |
-| Conferir alertas oficiais | Detalhe de evento → “Ver avisos oficiais” | O usuário é direcionado à página de avisos do INMET, identificada como fonte externa |
+| Capturar uma tarefa | Botão flutuante “+” → folha de tarefa → preencher título → salvar | A tarefa aparece em “Hoje” ou em “Tarefas” e fica salva localmente |
+| Planejar o dia | Aba “Planejar” → selecionar data → tocar no horário ou “Adicionar bloco” → salvar tarefa | A atividade é organizada na linha do tempo do dia escolhido |
+| Concluir uma tarefa | Hoje ou Tarefas → tocar no círculo de conclusão | O estado muda imediatamente, o resumo diário é recalculado e há confirmação tátil discreta em dispositivos compatíveis |
+| Acompanhar uma meta | Aba “Metas” → criar ou abrir uma meta → ajustar progresso | O cartão atualiza a porcentagem e evidencia o avanço até o resultado desejado |
 
-## Regras de classificação de riscos previstos
+## Modelo de dados local
 
-| Risco exibido | Sinais de previsão usados | Linguagem na interface |
+| Entidade | Campos essenciais | Regras de relacionamento |
 |---|---|---|
-| Chuva intensa | Probabilidade alta de precipitação e acumulado horário elevado | “Possibilidade de chuva intensa” |
-| Rajadas fortes | Rajada prevista elevada | “Ventos e rajadas previstos” |
-| Trovoadas | Código de tempo com trovoada ou instabilidade convectiva | “Condição favorável a trovoadas” |
-| Calor intenso | Temperatura aparente elevada e UV alto | “Estresse térmico previsto” |
-| Baixa visibilidade | Visibilidade prevista reduzida | “Visibilidade reduzida prevista” |
+| Tarefa | id, título, concluída, prioridade, data, hora, duração, metaId, criadoEm | Uma tarefa pode estar vinculada a zero ou uma meta |
+| Meta | id, título, unidade, valorAtual, valorMeta, prazo, cor | Uma meta pode reunir muitas tarefas |
+| Preferências | início do dia, formato de horário, data do último acesso | Mantidas para futura personalização, sem conta de usuário |
 
 ## Linguagem visual e layout
 
-O mapa ocupa o plano principal da tela e recebe uma folha de resumo arredondada na base, mantendo as ações frequentes dentro do alcance do polegar. Azul-noturno e azul-oceano organizam a identidade de confiança; laranja, rosa e violeta são reservados exclusivamente aos níveis de risco. Marcadores devem usar símbolos simples, rótulos curtos e contraste alto, sem depender somente da cor.
+O estilo segue a clareza e o equilíbrio de aplicativos nativos do iOS: superfícies suaves, hierarquia tipográfica ampla, barras de navegação compactas e feedback por toque. A tela “Hoje” mantém o conteúdo mais acionável no primeiro terço vertical; o botão de criação fica no canto inferior direito, dentro do alcance do polegar. Formulários são apresentados em folha modal para preservar o contexto da tela anterior.
 
-| Token | Cor | Uso |
+| Elemento | Escolha | Uso |
 |---|---|---|
-| Horizonte | `#0B1B3A` | Fundo de cabeçalhos e contexto noturno |
-| Oceano | `#1677C8` | Ações primárias, localização e elementos navegacionais |
-| Céu | `#EAF4FF` | Superfícies informativas e áreas de mapa auxiliares |
-| Atenção | `#E48B2C` | Risco moderado e precipitação relevante |
-| Severo | `#D95363` | Risco elevado e avisos que exigem atenção imediata |
-| Informação | `#7856C8` | Trovoadas, fenômenos elétricos e conteúdo educativo |
-| Texto | `#18243A` | Hierarquia tipográfica principal |
+| Cor principal | `#3B5BDB` (índigo ritmado) | Ações primárias, seleção e indicadores de foco |
+| Fundo | `#F7F8FC` | Fundo leve que separa cartões sem ruído visual |
+| Superfície | `#FFFFFF` | Cartões, folhas e campos de formulário |
+| Texto | `#1D2433` | Títulos e conteúdo de alta importância |
+| Texto secundário | `#697386` | Metadados, rótulos e informações auxiliares |
+| Progresso | `#2F9E78` | Sucesso, progresso concluído e metas alcançadas |
+| Atenção | `#E58C33` | Prioridade média e prazos próximos |
+| Urgência | `#D9485F` | Prioridade alta e ações destrutivas |
 
 ## Critérios de qualidade
 
-O aplicativo solicitará somente permissão de localização em primeiro plano e continuará útil com uma localização de demonstração caso a autorização seja negada. Cada evento mostrará sua categoria, hora aproximada, fonte e a distinção entre previsão e aviso oficial. Dados reais são buscados por coordenadas no momento da atualização; conteúdos educativos permanecem locais e não devem ser interpretados como orientação de emergência substitutiva.
+Cada ação visível terá um resultado concreto, sem botões inativos. O conteúdo precisa permanecer confortável em telas pequenas, respeitar áreas seguras e usar textos em português claros. Dados são persistidos em armazenamento local e cálculos de progresso são derivados das tarefas e metas existentes.

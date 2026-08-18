@@ -2,16 +2,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useProductivity } from "@/lib/productivity-store";
-import { formatShortDate, formatWeeklyDays, getTodayKey, priorityColor, priorityLabel, type ProductivityTask } from "@/lib/productivity-utils";
+import { formatShortDate, getTodayKey, priorityColor, priorityLabel, type ProductivityTask } from "@/lib/productivity-utils";
 
 export function TaskRow({ task, compact = false }: { task: ProductivityTask; compact?: boolean }) {
   const { goals, toggleTask, openTaskComposer } = useProductivity();
   const goal = task.goalId ? goals.find((item) => item.id === task.goalId) : undefined;
-  const details = [
-    task.time,
-    task.date && task.date !== getTodayKey() ? formatShortDate(task.date) : task.date ? "Hoje" : undefined,
-    task.recurrenceDays?.length ? `Toda ${formatWeeklyDays(task.recurrenceDays)}` : undefined,
-  ].filter(Boolean).join(" · ");
+  const details = [task.time, task.date && task.date !== getTodayKey() ? formatShortDate(task.date) : task.date ? "Hoje" : undefined].filter(Boolean).join(" · ");
 
   return (
     <View style={[styles.row, compact && styles.rowCompact]}>

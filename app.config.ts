@@ -28,11 +28,11 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Radar do Tempo",
+  appName: "Ritmo",
   appSlug: "produtividade-pessoal",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "/manus-storage/radar-tempo-icon_3784a2ad.png",
+  logoUrl: "/manus-storage/ritmo-app-icon_a81f4291.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -64,7 +64,7 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    permissions: ["POST_NOTIFICATIONS", "ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+    permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
         action: "VIEW",
@@ -86,12 +86,6 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
-    [
-      "expo-location",
-      {
-        locationWhenInUsePermission: "O Radar do Tempo usa sua localização somente durante o uso para mostrar a previsão e os riscos meteorológicos no seu entorno.",
-      },
-    ],
     [
       "expo-audio",
       {
