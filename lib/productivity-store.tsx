@@ -16,16 +16,21 @@ import {
 } from "react-native";
 
 import {
+  getWeeklyOccurrenceDates,
+  getWeekdayFromKey,
   getTodayKey,
+  normalizeWeekdaySelection,
+  WEEKDAY_OPTIONS,
   type ProductivityGoal,
   type ProductivityTask,
   type TaskPriority,
+  type WeekdayIndex,
 } from "@/lib/productivity-utils";
 
 const STORAGE_KEY = "ritmo-productivity-data-v1";
 const GOAL_COLORS = ["#3B5BDB", "#2F9E78", "#B05AD9", "#E58C33"];
 
-type TaskDraft = Pick<ProductivityTask, "title" | "priority" | "date" | "time" | "duration" | "goalId">;
+type TaskDraft = Pick<ProductivityTask, "title" | "priority" | "date" | "time" | "duration" | "goalId" | "recurrenceDays">;
 type GoalDraft = Pick<ProductivityGoal, "title" | "unit" | "currentValue" | "targetValue" | "deadline" | "color">;
 type ComposerTarget =
   | { type: "task"; task?: ProductivityTask; prefill?: Partial<TaskDraft> }
@@ -66,6 +71,23 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function createTaskOccurrence(draft: TaskDraft, date?: string, routineId?: string): ProductivityTask {
+  const recurrenceDays = normalizeWeekdaySelection(draft.recurrenceDays);
+  return {
+    id: makeId("task"),
+    title: draft.title.trim(),
+    completed: false,
+    priority: draft.priority,
+    date: date || draft.date || undefined,
+    time: draft.time || undefined,
+    duration: draft.duration,
+    goalId: draft.goalId || undefined,
+    routineId,
+    recurrenceDays: recurrenceDays.length ? recurrenceDays : undefined,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export function ProductivityProvider({ children }: PropsWithChildren) {
   const [tasks, setTasks] = useState<ProductivityTask[]>([]);
   const [goals, setGoals] = useState<ProductivityGoal[]>([]);
@@ -99,37 +121,71 @@ export function ProductivityProvider({ children }: PropsWithChildren) {
   }, [tasks, goals, hydrated]);
 
   const createTask = useCallback((draft: TaskDraft) => {
-    const task: ProductivityTask = {
-      id: makeId("task"),
-      title: draft.title.trim(),
-      completed: false,
-      priority: draft.priority,
-      date: draft.date || undefined,
-      time: draft.time || undefined,
-      duration: draft.duration,
-      goalId: draft.goalId || undefined,
-      createdAt: new Date().toISOString(),
-    };
-    setTasks((current) => [task, ...current]);
+    const recurrenceDays = normalizeWeekdaySelection(draft.recurrenceDays);
+    const startDate = draft.date || getTodayKey();
+    const routineId = recurrenceDays.length ? makeId("routine") : undefined;
+    const dates = recurrenceDays.length ? getWeeklyOccurrenceDates(startDate, recurrenceDays) : [draft.date];
+    const createdTasks = dates.map((date) => createTaskOccurrence({ ...draft, recurrenceDays }, date, routineId));
+    setTasks((current) => [...createdTasks, ...current]);
     haptic("light");
   }, []);
 
   const updateTask = useCallback((id: string, draft: TaskDraft) => {
-    setTasks((current) =>
-      current.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              title: draft.title.trim(),
-              priority: draft.priority,
-              date: draft.date || undefined,
-              time: draft.time || undefined,
-              duration: draft.duration,
-              goalId: draft.goalId || undefined,
-            }
-          : task,
-      ),
-    );
+    setTasks((current) => {
+      const target = current.find((task) => task.id === id);
+      if (!target) return current;
+
+      const recurrenceDays = normalizeWeekdaySelection(draft.recurrenceDays);
+      const startDate = draft.date || target.date || getTodayKey();
+      const shouldRegenerate = Boolean(target.routineId) || recurrenceDays.length > 0;
+
+      if (!shouldRegenerate) {
+        return current.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                title: draft.title.trim(),
+                priority: draft.priority,
+                date: draft.date || undefined,
+                time: draft.time || undefined,
+                duration: draft.duration,
+                goalId: draft.goalId || undefined,
+                routineId: undefined,
+                recurrenceDays: undefined,
+              }
+            : task,
+        );
+      }
+
+      if (!recurrenceDays.length && target.routineId) {
+        return current
+          .filter((task) => task.routineId !== target.routineId || task.completed || task.id === id)
+          .map((task) =>
+            task.id === id
+              ? {
+                  ...task,
+                  title: draft.title.trim(),
+                  priority: draft.priority,
+                  date: startDate,
+                  time: draft.time || undefined,
+                  duration: draft.duration,
+                  goalId: draft.goalId || undefined,
+                  routineId: undefined,
+                  recurrenceDays: undefined,
+                }
+              : task,
+          );
+      }
+
+      const routineId = target.routineId ?? makeId("routine");
+      const futureRoutine = getWeeklyOccurrenceDates(startDate, recurrenceDays).map((date) =>
+        createTaskOccurrence({ ...draft, recurrenceDays }, date, routineId),
+      );
+      const retained = current.filter(
+        (task) => task.routineId !== routineId || task.completed || Boolean(task.date && task.date < startDate),
+      );
+      return [...futureRoutine, ...retained];
+    });
     haptic("light");
   }, []);
 
@@ -238,6 +294,7 @@ function EntryComposer({ composer, onClose }: { composer: ComposerTarget; onClos
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [goalId, setGoalId] = useState<string | undefined>();
+  const [recurrenceDays, setRecurrenceDays] = useState<WeekdayIndex[]>([]);
   const [unit, setUnit] = useState("etapas");
   const [currentValue, setCurrentValue] = useState("0");
   const [targetValue, setTargetValue] = useState("1");
@@ -253,6 +310,7 @@ function EntryComposer({ composer, onClose }: { composer: ComposerTarget; onClos
       setDate(item?.date ?? composer.prefill?.date ?? getTodayKey());
       setTime(item?.time ?? composer.prefill?.time ?? "");
       setGoalId(item?.goalId ?? composer.prefill?.goalId);
+      setRecurrenceDays(item?.recurrenceDays ?? composer.prefill?.recurrenceDays ?? []);
     } else {
       const item = composer.goal;
       setTitle(item?.title ?? "");
@@ -267,7 +325,7 @@ function EntryComposer({ composer, onClose }: { composer: ComposerTarget; onClos
   const save = () => {
     if (!title.trim()) return;
     if (isTask) {
-      const draft: TaskDraft = { title, priority, date, time, goalId };
+      const draft: TaskDraft = { title, priority, date, time, goalId, recurrenceDays };
       if (originalTask) updateTask(originalTask.id, draft);
       else createTask(draft);
     } else {
@@ -283,6 +341,18 @@ function EntryComposer({ composer, onClose }: { composer: ComposerTarget; onClos
       else createGoal(draft);
     }
     onClose();
+  };
+
+  const toggleRecurrence = () => {
+    setRecurrenceDays((current) => (current.length ? [] : [getWeekdayFromKey(date || getTodayKey())]));
+  };
+
+  const toggleWeekday = (weekday: WeekdayIndex) => {
+    setRecurrenceDays((current) =>
+      current.includes(weekday)
+        ? current.filter((value) => value !== weekday)
+        : normalizeWeekdaySelection([...current, weekday]),
+    );
   };
 
   const remove = () => {
@@ -342,6 +412,28 @@ function EntryComposer({ composer, onClose }: { composer: ComposerTarget; onClos
                       <TextInput value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor="#9BA3B1" style={composerStyles.smallInput} />
                     </View>
                   </View>
+
+                  <View style={composerStyles.recurrenceHeader}>
+                    <View>
+                      <Text style={composerStyles.label}>Repetir semanalmente</Text>
+                      <Text style={composerStyles.recurrenceHint}>Cria os próximos 8 ciclos da rotina.</Text>
+                    </View>
+                    <Pressable onPress={toggleRecurrence} style={({ pressed }) => [composerStyles.recurrenceToggle, recurrenceDays.length > 0 && composerStyles.recurrenceToggleActive, pressed && composerStyles.pressed]}>
+                      <View style={[composerStyles.recurrenceKnob, recurrenceDays.length > 0 && composerStyles.recurrenceKnobActive]} />
+                    </Pressable>
+                  </View>
+                  {recurrenceDays.length > 0 && (
+                    <View style={composerStyles.weekdayPicker}>
+                      {WEEKDAY_OPTIONS.map((weekday) => {
+                        const selected = recurrenceDays.includes(weekday.value);
+                        return (
+                          <Pressable key={weekday.value} onPress={() => toggleWeekday(weekday.value)} style={({ pressed }) => [composerStyles.weekdayButton, selected && composerStyles.weekdayButtonSelected, pressed && composerStyles.pressed]}>
+                            <Text style={[composerStyles.weekdayText, selected && composerStyles.weekdayTextSelected]}>{weekday.shortLabel}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  )}
 
                   <Text style={composerStyles.label}>Vincular a uma meta</Text>
                   <FlatList
@@ -441,6 +533,17 @@ const composerStyles = StyleSheet.create({
   twoColumns: { flexDirection: "row", gap: 12 },
   fieldColumn: { flex: 1 },
   smallInput: { backgroundColor: "#F6F7FB", borderColor: "#E5E8F0", borderWidth: 1, color: "#1D2433", fontSize: 15, lineHeight: 20, paddingHorizontal: 12, paddingVertical: 13, borderRadius: 14 },
+  recurrenceHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 1 },
+  recurrenceHint: { color: "#8992A2", fontSize: 11, lineHeight: 15, fontWeight: "600", marginTop: -4 },
+  recurrenceToggle: { width: 46, height: 28, borderRadius: 16, backgroundColor: "#D8DDE7", padding: 3, justifyContent: "center", marginTop: 15 },
+  recurrenceToggleActive: { backgroundColor: "#3B5BDB", alignItems: "flex-end" },
+  recurrenceKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFFFFF" },
+  recurrenceKnobActive: { backgroundColor: "#FFFFFF" },
+  weekdayPicker: { flexDirection: "row", gap: 6, marginTop: 9, marginBottom: 2 },
+  weekdayButton: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 35, borderRadius: 11, backgroundColor: "#F2F4F8" },
+  weekdayButtonSelected: { backgroundColor: "#E1E7FF", borderWidth: 1, borderColor: "#8095EF" },
+  weekdayText: { color: "#697386", fontSize: 10, lineHeight: 14, fontWeight: "800" },
+  weekdayTextSelected: { color: "#304FC7" },
   goalChoices: { gap: 8, paddingBottom: 2 },
   goalChoice: { maxWidth: 160, backgroundColor: "#F2F4F8", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10 },
   goalChoiceSelected: { backgroundColor: "#E8ECFF" },

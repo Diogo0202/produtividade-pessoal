@@ -1,4 +1,15 @@
 export type TaskPriority = "alta" | "média" | "baixa";
+export type WeekdayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export const WEEKDAY_OPTIONS: Array<{ value: WeekdayIndex; shortLabel: string; longLabel: string }> = [
+  { value: 1, shortLabel: "Seg", longLabel: "Segunda" },
+  { value: 2, shortLabel: "Ter", longLabel: "Terça" },
+  { value: 3, shortLabel: "Qua", longLabel: "Quarta" },
+  { value: 4, shortLabel: "Qui", longLabel: "Quinta" },
+  { value: 5, shortLabel: "Sex", longLabel: "Sexta" },
+  { value: 6, shortLabel: "Sáb", longLabel: "Sábado" },
+  { value: 0, shortLabel: "Dom", longLabel: "Domingo" },
+];
 
 export type ProductivityTask = {
   id: string;
@@ -9,6 +20,8 @@ export type ProductivityTask = {
   time?: string;
   duration?: number;
   goalId?: string;
+  routineId?: string;
+  recurrenceDays?: WeekdayIndex[];
   createdAt: string;
 };
 
@@ -39,6 +52,40 @@ export function getTodayKey(date = new Date()) {
 
 export function dateFromKey(key: string) {
   return new Date(`${key}T12:00:00`);
+}
+
+export function getWeekdayFromKey(key: string): WeekdayIndex {
+  return dateFromKey(key).getDay() as WeekdayIndex;
+}
+
+export function normalizeWeekdaySelection(days: WeekdayIndex[] = []) {
+  return WEEKDAY_OPTIONS.map((item) => item.value).filter((weekday) => days.includes(weekday));
+}
+
+export function formatWeeklyDays(days: WeekdayIndex[] = []) {
+  const selected = normalizeWeekdaySelection(days);
+  if (selected.length === 7) return "todos os dias";
+  return selected
+    .map((weekday) => WEEKDAY_OPTIONS.find((item) => item.value === weekday)?.shortLabel)
+    .filter(Boolean)
+    .join(", ");
+}
+
+export function getWeeklyOccurrenceDates(startKey: string, days: WeekdayIndex[], weeks = 8) {
+  const selected = normalizeWeekdaySelection(days);
+  if (!selected.length) return [];
+  const startDate = dateFromKey(startKey);
+  const dates: string[] = [];
+
+  for (let offset = 0; offset < weeks * 7; offset += 1) {
+    const candidate = new Date(startDate);
+    candidate.setDate(startDate.getDate() + offset);
+    if (selected.includes(candidate.getDay() as WeekdayIndex)) {
+      dates.push(getTodayKey(candidate));
+    }
+  }
+
+  return dates;
 }
 
 export function formatLongDate(key: string) {
