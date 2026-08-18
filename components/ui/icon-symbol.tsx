@@ -38,6 +38,7 @@ const MAPPING = {
   warnings: "warning-amber",
   data: "analytics",
   shield: "verified-user",
+  filter: "filter-list",
 } as IconMapping;
 
 export function IconSymbol({ name, size = 24, color, style }: { name: IconSymbolName; size?: number; color: string | OpaqueColorValue; style?: StyleProp<TextStyle>; weight?: SymbolWeight }) {

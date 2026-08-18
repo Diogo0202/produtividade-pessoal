@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { WeatherMap } from "@/components/weather/weather-map";
+import { WeatherFilters } from "@/components/weather/weather-filters";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ScreenContainer } from "@/components/screen-container";
 import { useWeather } from "@/lib/weather-store";
@@ -22,6 +23,7 @@ export default function MapScreen() {
           <Pressable onPress={() => void refresh()} style={({ pressed }) => [styles.refresh, pressed && styles.pressed]}><IconSymbol name="refresh" size={20} color="#FFFFFF" /></Pressable>
         </View>
         <View style={styles.statusChip}><View style={styles.statusDot} /><Text style={styles.statusText}>{events.length ? `${events.length} sinais no entorno` : "Sem risco relevante previsto"}</Text></View>
+        <View style={styles.filters}><WeatherFilters compact /></View>
         <View style={styles.summary}>
           <View style={styles.summaryHeader}>
             <View><Text style={styles.location}>{coordinates.label}</Text><Text style={styles.source}>{coordinates.source === "gps" ? "LOCALIZAÇÃO ATUAL" : "LOCALIZAÇÃO DE DEMONSTRAÇÃO"}</Text></View>
@@ -48,6 +50,7 @@ const styles = StyleSheet.create({
   statusChip: { position: "absolute", top: 72, left: 18, backgroundColor: "rgba(255,255,255,0.93)", borderRadius: 15, paddingHorizontal: 10, paddingVertical: 7, flexDirection: "row", gap: 6, alignItems: "center" },
   statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#2DA77A" },
   statusText: { color: "#35516D", fontSize: 11, lineHeight: 15, fontWeight: "700" },
+  filters: { position: "absolute", top: 109, left: 18, right: 0 },
   summary: { position: "absolute", left: 14, right: 14, bottom: 13, padding: 17, backgroundColor: "#FFFFFF", borderRadius: 24, shadowColor: "#0B1B3A", shadowOpacity: 0.16, shadowRadius: 14, elevation: 5 },
   summaryHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
   location: { color: "#1B2F49", fontSize: 17, lineHeight: 22, fontWeight: "800" },

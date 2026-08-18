@@ -91,6 +91,11 @@ export function buildWeatherEvents(hours: ForecastHour[], coordinates: Coordinat
   return events.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 }
 
+export function filterWeatherEvents(events: WeatherEvent[], selectedKinds: WeatherEventKind[]) {
+  if (!selectedKinds.length) return events;
+  return events.filter((event) => selectedKinds.includes(event.kind));
+}
+
 export function parseWeatherResponse(data: any): WeatherSnapshot {
   const current = data.current;
   const hourly = data.hourly;

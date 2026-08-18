@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildWeatherEvents, getConditionLabel, parseWeatherResponse } from "../lib/weather-utils";
+import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, parseWeatherResponse } from "../lib/weather-utils";
 
 const coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" as const };
 
@@ -30,5 +30,11 @@ describe("utilitários meteorológicos", () => {
     });
     expect(snapshot.current.temperature).toBe(25.4);
     expect(snapshot.hours[0].visibility).toBe(10000);
+  });
+
+  it("filtra eventos por múltiplos tipos sem alterar a lista original", () => {
+    const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
+    expect(filterWeatherEvents(events, ["trovoada", "calor"]).map((event) => event.kind)).toEqual(["trovoada", "calor"]);
+    expect(filterWeatherEvents(events, [])).toHaveLength(events.length);
   });
 });

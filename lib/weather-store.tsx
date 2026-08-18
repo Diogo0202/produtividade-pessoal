@@ -1,14 +1,15 @@
 import * as Location from "expo-location";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import type { Coordinates, WeatherEvent, WeatherSnapshot } from "@/lib/weather-types";
-import { buildWeatherEvents, FALLBACK_COORDINATES, parseWeatherResponse } from "@/lib/weather-utils";
+import type { Coordinates, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "@/lib/weather-types";
+import { buildWeatherEvents, FALLBACK_COORDINATES, filterWeatherEvents, parseWeatherResponse } from "@/lib/weather-utils";
 
 type LocationState = "initial" | "granted" | "denied" | "unavailable";
 type WeatherContextValue = {
   coordinates: Coordinates;
   snapshot: WeatherSnapshot | null;
   events: WeatherEvent[];
+  activeEventKinds: WeatherEventKind[];
   loading: boolean;
   error: string | null;
   locationState: LocationState;
@@ -16,6 +17,8 @@ type WeatherContextValue = {
   requestLocation: () => Promise<void>;
   refresh: (coordinatesOverride?: Coordinates) => Promise<void>;
   selectEvent: (event: WeatherEvent | null) => void;
+  toggleEventKind: (kind: WeatherEventKind) => void;
+  clearEventKinds: () => void;
 };
 
 const WeatherContext = createContext<WeatherContextValue | null>(null);
@@ -40,6 +43,7 @@ export function WeatherProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const [locationState, setLocationState] = useState<LocationState>("initial");
   const [selectedEvent, setSelectedEvent] = useState<WeatherEvent | null>(null);
+  const [activeEventKinds, setActiveEventKinds] = useState<WeatherEventKind[]>([]);
 
   const refresh = useCallback(async (coordinatesOverride?: Coordinates) => {
     const target = coordinatesOverride ?? coordinates;
@@ -97,8 +101,13 @@ export function WeatherProvider({ children }: PropsWithChildren) {
     }
   }, [refresh]);
 
-  const events = useMemo(() => (snapshot ? buildWeatherEvents(snapshot.hours, coordinates) : []), [coordinates, snapshot]);
-  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent }), [coordinates, snapshot, events, loading, error, locationState, selectedEvent, requestLocation, refresh]);
+  const allEvents = useMemo(() => (snapshot ? buildWeatherEvents(snapshot.hours, coordinates) : []), [coordinates, snapshot]);
+  const events = useMemo(() => filterWeatherEvents(allEvents, activeEventKinds), [activeEventKinds, allEvents]);
+  const toggleEventKind = useCallback((kind: WeatherEventKind) => {
+    setActiveEventKinds((current) => current.includes(kind) ? current.filter((item) => item !== kind) : [...current, kind]);
+  }, []);
+  const clearEventKinds = useCallback(() => setActiveEventKinds([]), []);
+  const value = useMemo<WeatherContextValue>(() => ({ coordinates, snapshot, events, activeEventKinds, loading, error, locationState, selectedEvent, requestLocation, refresh, selectEvent: setSelectedEvent, toggleEventKind, clearEventKinds }), [coordinates, snapshot, events, activeEventKinds, loading, error, locationState, selectedEvent, requestLocation, refresh, toggleEventKind, clearEventKinds]);
 
   return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>;
 }
