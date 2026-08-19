@@ -30,3 +30,6 @@
 - [x] Implementar explicações em níveis leigo, técnico e acadêmico
 - [x] Implementar alertas configuráveis e fonte dos dados meteorológicos
 - [x] Validar fluxos web da plataforma educacional
+- [x] Definir a proposta e a narrativa do site público do Radar do Tempo Educação
+- [x] Criar página institucional responsiva com recursos, fluxo e chamada para instituições
+- [x] Validar a apresentação do site público
