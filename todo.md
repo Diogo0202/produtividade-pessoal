@@ -22,3 +22,4 @@
 - [x] Persistir as preferências de filtros para reutilizá-las nas próximas aberturas
 - [x] Adicionar alerta visual na tela principal para eventos de alto risco próximos
 - [x] Adicionar histórico local de alertas recentes de alto risco por região
+- [x] Adicionar busca textual e filtros por data na aba de histórico

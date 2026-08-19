@@ -1,6 +1,8 @@
 import { WEATHER_KNOWLEDGE } from "./weather-knowledge";
 import type { Coordinates, ForecastHour, RiskLevel, WeatherAlertHistoryEntry, WeatherEvent, WeatherEventKind, WeatherSnapshot } from "./weather-types";
 
+export type HistoryDateFilter = "all" | "today" | "7d" | "30d";
+
 export const FALLBACK_COORDINATES: Coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" };
 
 export function getConditionLabel(code: number) {
@@ -124,6 +126,19 @@ export function mergeAlertHistory(existing: WeatherAlertHistoryEntry[], events: 
   return [...incoming, ...existing.filter((entry) => !known.has(entry.id))]
     .sort((first, second) => new Date(second.recordedAt).getTime() - new Date(first.recordedAt).getTime())
     .slice(0, 30);
+}
+
+export function filterAlertHistory(entries: WeatherAlertHistoryEntry[], query: string, period: HistoryDateFilter, referenceDate = new Date()) {
+  const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
+  const referenceTime = referenceDate.getTime();
+  const startOfToday = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate()).getTime();
+  const periodStart = period === "today" ? startOfToday : period === "7d" ? referenceTime - 7 * 24 * 60 * 60 * 1000 : period === "30d" ? referenceTime - 30 * 24 * 60 * 60 * 1000 : 0;
+  return entries.filter((entry) => {
+    const searchable = [entry.event.title, entry.event.kind, entry.regionLabel, entry.event.shortDescription].join(" ").toLocaleLowerCase("pt-BR");
+    const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery);
+    const matchesPeriod = !periodStart || new Date(entry.recordedAt).getTime() >= periodStart;
+    return matchesQuery && matchesPeriod;
+  });
 }
 
 export function parseWeatherResponse(data: any): WeatherSnapshot {

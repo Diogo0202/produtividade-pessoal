@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildWeatherEvents, filterWeatherEvents, getConditionLabel, getNearbyHighRiskEvents, mergeAlertHistory, parseWeatherResponse } from "../lib/weather-utils";
+import { buildWeatherEvents, filterAlertHistory, filterWeatherEvents, getConditionLabel, getNearbyHighRiskEvents, mergeAlertHistory, parseWeatherResponse } from "../lib/weather-utils";
 
 const coordinates = { latitude: -23.5505, longitude: -46.6333, label: "São Paulo, SP", source: "demo" as const };
 
@@ -58,5 +58,13 @@ describe("utilitários meteorológicos", () => {
     expect(firstRecord).toHaveLength(3);
     expect(updatedRecord).toHaveLength(3);
     expect(updatedRecord[0].regionLabel).toBe("São Paulo, SP");
+  });
+
+  it("localiza alertas por texto e restringe resultados a um período", () => {
+    const events = buildWeatherEvents([{ time: "2026-08-19T12:00", temperature: 34, apparentTemperature: 38, precipitationProbability: 90, precipitation: 14, weatherCode: 95, windSpeed: 34, gusts: 78, visibility: 400, uvIndex: 8 }], coordinates);
+    const entries = mergeAlertHistory([], getNearbyHighRiskEvents(events, coordinates), coordinates, "2026-08-19T10:00:00.000Z");
+    expect(filterAlertHistory(entries, "chuva", "all", new Date("2026-08-20T10:00:00.000Z"))).toHaveLength(1);
+    expect(filterAlertHistory(entries, "São Paulo", "7d", new Date("2026-08-20T10:00:00.000Z"))).toHaveLength(3);
+    expect(filterAlertHistory(entries, "", "today", new Date("2026-08-20T10:00:00.000Z"))).toHaveLength(0);
   });
 });
