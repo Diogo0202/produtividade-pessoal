@@ -41,6 +41,17 @@ const MAPPING = {
   filter: "filter-list",
   history: "history",
   search: "search",
+  public: "public",
+  dashboard: "space-dashboard",
+  school: "school",
+  group: "group",
+  play: "play-arrow",
+  pause: "pause",
+  send: "send",
+  "menu-book": "menu-book",
+  "person-add": "person-add",
+  warning: "warning-amber",
+  "auto-awesome": "auto-awesome",
 } as IconMapping;
 
 export function IconSymbol({ name, size = 24, color, style }: { name: IconSymbolName; size?: number; color: string | OpaqueColorValue; style?: StyleProp<TextStyle>; weight?: SymbolWeight }) {

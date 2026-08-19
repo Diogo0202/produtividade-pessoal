@@ -1,20 +1,14 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
 
-import { EventDetailSheet } from "@/components/weather/event-detail-sheet";
+import { EducationProvider } from "@/lib/education-store";
+import { createTRPCClient, trpc } from "@/lib/trpc";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { WeatherProvider } from "@/lib/weather-store";
 
 export default function RootLayout() {
-  return (
-    <ThemeProvider>
-      <WeatherProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-        <EventDetailSheet />
-        <StatusBar style="dark" />
-      </WeatherProvider>
-    </ThemeProvider>
-  );
+  const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() => createTRPCClient());
+  return <trpc.Provider client={trpcClient} queryClient={queryClient}><QueryClientProvider client={queryClient}><ThemeProvider><EducationProvider><Stack screenOptions={{ headerShown: false }}><Stack.Screen name="(tabs)" /></Stack><StatusBar style="light" /></EducationProvider></ThemeProvider></QueryClientProvider></trpc.Provider>;
 }

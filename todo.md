@@ -23,3 +23,10 @@
 - [x] Adicionar alerta visual na tela principal para eventos de alto risco próximos
 - [x] Adicionar histórico local de alertas recentes de alto risco por região
 - [x] Adicionar busca textual e filtros por data na aba de histórico
+- [x] Definir modelo de instituições, professores, alunos e aulas para a versão educacional web
+- [x] Criar painel web do professor para aulas, alunos e eventos meteorológicos
+- [x] Criar visão do aluno para acompanhar a aula em andamento
+- [x] Implementar mapa mundial e envio de eventos para a turma
+- [x] Implementar explicações em níveis leigo, técnico e acadêmico
+- [x] Implementar alertas configuráveis e fonte dos dados meteorológicos
+- [x] Validar fluxos web da plataforma educacional

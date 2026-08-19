@@ -1,52 +1,43 @@
-# Plano de Interface — Radar do Tempo
+# Plano de Interface Web — Radar do Tempo Educação
 
-## Direção do produto
+## Objetivo da primeira versão
 
-**Radar do Tempo** é um aplicativo de consciência meteorológica para orientação retrato e uso rápido com uma mão. Ele combina a localização atual do usuário, previsão por coordenadas e sinais de risco derivados de variáveis meteorológicas. A interface deve diferenciar de maneira inequívoca **risco previsto** de **aviso oficial**, evitando apresentar previsões modeladas como um alerta confirmado.
+**Radar do Tempo Educação** transforma eventos meteorológicos em atividades guiadas por professor. A versão web privilegia telas largas, leitura coletiva em projetor e acompanhamento sincronizado dos alunos. O professor organiza turmas, escolhe uma cidade e um evento no mapa mundial e controla qual conteúdo aparece aos alunos durante a aula.
 
-## Lista de telas
+## Perfis e entidades
 
-| Tela | Conteúdo e estrutura | Funcionalidade principal |
+| Entidade | Dados essenciais | Responsabilidade |
 |---|---|---|
-| Mapa | Mapa de contexto, ponto da localização, marcadores de eventos previstos e pílula de atualização | Visualizar os riscos no entorno e tocar um marcador para abrir seu detalhe |
-| Agora | Resumo de temperatura, condição atual, vento, UV, precipitação e faixa de confiança da previsão | Atualizar dados e abrir a visualização no mapa |
-| Eventos | Lista ordenada por severidade e hora prevista, com fonte e status do evento | Filtrar riscos e abrir a ficha de cada fenômeno |
-| Ficha do evento | Severidade, janela estimada, sinais que levaram à classificação, formação, mitigação, estação mais comum e fonte | Ler orientações de segurança e consultar o aviso oficial quando disponível |
-| Sobre os dados | Data/hora da atualização, modelo de previsão, legenda de risco e link para avisos oficiais | Dar transparência à origem, atualização e limites das informações |
+| Instituição | Nome, cidade e identificador | Agrupa usuários e turmas |
+| Professor | Nome, e-mail e instituição | Cria aulas, adiciona alunos e controla a apresentação |
+| Aluno | Nome, e-mail e instituição | Acompanha a aula publicada pelo professor |
+| Turma | Nome, nível educacional, professor e alunos | Define o contexto pedagógico e o nível de explicação |
+| Aula | Turma, cidade, evento ativo e status | Mantém o evento projetado e o modo de apresentação |
+| Evento | Tipo, cidade, coordenadas, severidade, fonte e atualização | É selecionado no mapa e compartilhado com a turma |
+
+## Estrutura da interface web
+
+| Área | Professor | Aluno |
+|---|---|---|
+| Barra superior | Instituição, turma ativa, modo de apresentação e perfil | Instituição, turma acompanhada e indicador de aula ao vivo |
+| Navegação lateral | Painel, Minhas aulas, Turmas, Eventos e Alertas | Minha aula, Eventos e Histórico |
+| Centro | Mapa mundial com marcadores de eventos e painel de seleção | Evento que está sendo apresentado e mapa de contexto |
+| Painel direito | Detalhe do evento, envio à turma, explicações por nível e IA | Explicação selecionada, impactos e mitigação |
 
 ## Fluxos prioritários
 
 | Fluxo | Caminho | Resultado |
 |---|---|---|
-| Ver o cenário local | Abrir aplicativo → conceder localização durante o uso → dados por coordenadas são carregados | O mapa centraliza o usuário e exibe condições e riscos previstos no entorno |
-| Explorar um risco | Tocar marcador no mapa ou item da lista → abrir folha de detalhe | O usuário entende o tipo, a janela de ocorrência, os gatilhos do modelo e ações de mitigação |
-| Ver a condição atual | Aba “Agora” → tocar “Atualizar” | A tela consulta a previsão novamente e informa o horário da resposta |
-| Conferir alertas oficiais | Detalhe de evento → “Ver avisos oficiais” | O usuário é direcionado à página de avisos do INMET, identificada como fonte externa |
+| Criar aula | Professor → “Nova aula” → nome, turma e nível → salvar | Uma aula associada à instituição fica pronta para apresentação |
+| Adicionar aluno | Professor → Turma → “Adicionar aluno” → preencher dados | O aluno fica vinculado à turma ativa |
+| Apresentar evento | Professor → mapa → cidade/evento → “Enviar à turma” → iniciar apresentação | Todos os alunos no modo aluno veem o evento ativo |
+| Adaptar explicação | Professor ou aluno → níveis Leigo/Técnico/Acadêmico → “Adaptar com IA” | A explicação considera o tipo de evento e o nível escolhido |
+| Acompanhar aula | Aluno → modo aluno → “Aula ao vivo” | O conteúdo enviado pelo professor aparece com impactos e mitigação |
 
-## Regras de classificação de riscos previstos
+## Regras de dados e transparência
 
-| Risco exibido | Sinais de previsão usados | Linguagem na interface |
-|---|---|---|
-| Chuva intensa | Probabilidade alta de precipitação e acumulado horário elevado | “Possibilidade de chuva intensa” |
-| Rajadas fortes | Rajada prevista elevada | “Ventos e rajadas previstos” |
-| Trovoadas | Código de tempo com trovoada ou instabilidade convectiva | “Condição favorável a trovoadas” |
-| Calor intenso | Temperatura aparente elevada e UV alto | “Estresse térmico previsto” |
-| Baixa visibilidade | Visibilidade prevista reduzida | “Visibilidade reduzida prevista” |
+Eventos são classificados como **monitoramento educativo** e exibem fonte e horário de atualização. Explicações adaptadas por IA são identificadas como conteúdo de apoio e mantêm a fonte meteorológica visível. Nesta primeira interface, dados de aulas, usuários e vínculos permanecem no armazenamento local do navegador como modo demonstrativo; a arquitetura prepara o uso de autenticação e banco de dados em uma evolução posterior.
 
-## Linguagem visual e layout
+## Direção visual
 
-O mapa ocupa o plano principal da tela e recebe uma folha de resumo arredondada na base, mantendo as ações frequentes dentro do alcance do polegar. Azul-noturno e azul-oceano organizam a identidade de confiança; laranja, rosa e violeta são reservados exclusivamente aos níveis de risco. Marcadores devem usar símbolos simples, rótulos curtos e contraste alto, sem depender somente da cor.
-
-| Token | Cor | Uso |
-|---|---|---|
-| Horizonte | `#0B1B3A` | Fundo de cabeçalhos e contexto noturno |
-| Oceano | `#1677C8` | Ações primárias, localização e elementos navegacionais |
-| Céu | `#EAF4FF` | Superfícies informativas e áreas de mapa auxiliares |
-| Atenção | `#E48B2C` | Risco moderado e precipitação relevante |
-| Severo | `#D95363` | Risco elevado e avisos que exigem atenção imediata |
-| Informação | `#7856C8` | Trovoadas, fenômenos elétricos e conteúdo educativo |
-| Texto | `#18243A` | Hierarquia tipográfica principal |
-
-## Critérios de qualidade
-
-O aplicativo solicitará somente permissão de localização em primeiro plano e continuará útil com uma localização de demonstração caso a autorização seja negada. Cada evento mostrará sua categoria, hora aproximada, fonte e a distinção entre previsão e aviso oficial. Dados reais são buscados por coordenadas no momento da atualização; conteúdos educativos permanecem locais e não devem ser interpretados como orientação de emergência substitutiva.
+A marca combina azul profundo de observatório (`#0D2344`), azul-celeste científico (`#2D8CDA`), âmbar de atenção (`#ECA63D`) e coral para severidade (`#DF5C69`). O mapa ocupa a região central; cartões brancos, grid leve e tipografia de alta legibilidade organizam informações para salas de aula e projetores.
